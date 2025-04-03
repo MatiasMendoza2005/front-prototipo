@@ -1,71 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import CardVoluntario from '../components/CardVoluntario';
 import '../styles/listaVoluntarios.css';
 
 const ListaVoluntarios = () => {
+    const [voluntarios, setVoluntarios] = useState([]);
     const [busqueda, setBusqueda] = useState('');
+    const [error, setError] = useState('');
 
-    const voluntarios = [
-        {
-            id: 1,
-            nombre: 'Alejandro Ormachea',
-            estado: 'Disponible',
-            ci: '97841123',
-            tipoSangre: 'RH A+',
-            ultimaEvaluacion: '19/02/2025',
-        },
-        {
-            id: 2,
-            nombre: 'Carla Fernández',
-            estado: 'Disponible',
-            ci: '65498127',
-            tipoSangre: 'RH O-',
-            ultimaEvaluacion: '15/03/2025',
-        },
-        {
-            id: 3,
-            nombre: 'Luis Mamani',
-            estado: 'Disponible',
-            ci: '81329764',
-            tipoSangre: 'RH B+',
-            ultimaEvaluacion: '10/01/2025',
-        },
-        {
-            id: 4,
-            nombre: 'Carla Fernández',
-            estado: 'Disponible',
-            ci: '65498127',
-            tipoSangre: 'RH O-',
-            ultimaEvaluacion: '15/03/2025',
-        },
-        {
-            id: 5,
-            nombre: 'Luis Mamani',
-            estado: 'Disponible',
-            ci: '81329764',
-            tipoSangre: 'RH B+',
-            ultimaEvaluacion: '10/01/2025',
-        },
-        {
-            id: 6,
-            nombre: 'Carla Fernández',
-            estado: 'Disponible',
-            ci: '65498127',
-            tipoSangre: 'RH O-',
-            ultimaEvaluacion: '15/03/2025',
-        },
-        {
-            id: 7,
-            nombre: 'Luis Mamani',
-            estado: 'Disponible',
-            ci: '81329764',
-            tipoSangre: 'RH B+',
-            ultimaEvaluacion: '10/01/2025',
-        },
-    ];
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const bearer = localStorage.getItem('bearer');
 
-    const filtrados = voluntarios.filter((v) =>
+        if (!token) {
+            setError('No estás autenticado. Redirigiendo...');
+            // Aquí puedes redirigir al login si no hay token
+            // navigate("/login");
+            return;
+        }
+
+        // Realiza la solicitud GET a la API para obtener los voluntarios
+        axios.get('http://127.0.0.1:8000/admin/voluntarios', {
+            headers: {
+                Authorization: `${bearer} ${token}`  // Bearer + token
+            }
+        })
+            .then(response => {
+                setVoluntarios(response.data);
+            })
+            .catch(error => {
+                setError('No se pudo cargar la lista de voluntarios');
+                console.error(error);
+            });
+    }, []);
+
+    // Filtrar la lista de voluntarios por el nombre (según la búsqueda del usuario)
+    const voluntariosFiltrados = voluntarios.filter((v) =>
         v.nombre.toLowerCase().includes(busqueda.toLowerCase())
     );
 
@@ -86,10 +57,16 @@ const ListaVoluntarios = () => {
                     </div>
                 </div>
 
+                {error && <p className="error-message">{error}</p>}
+
                 <div className="lista-voluntarios-scroll">
-                    {filtrados.map((v) => (
-                        <CardVoluntario key={v.id} voluntario={v} />
-                    ))}
+                    {voluntariosFiltrados.length > 0 ? (
+                        voluntariosFiltrados.map((voluntario) => (
+                            <CardVoluntario key={voluntario.id} voluntario={voluntario} />
+                        ))
+                    ) : (
+                        <p>No se encontraron voluntarios.</p>
+                    )}
                 </div>
             </div>
         </div>
